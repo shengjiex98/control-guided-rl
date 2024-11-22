@@ -4,17 +4,29 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ 04f3e318-6489-11ef-1ccc-89d0ed2d1029
 begin
 	import Pkg
 	Pkg.activate(".")
 	Pkg.instantiate()
+	
 	using Revise
 	using Plots
 	plotlyjs()
 	using LinearAlgebra
 	using PlutoUI
-	push!(LOAD_PATH, "$(@__DIR__)/../src")
+
+	Pkg.develop(path="../")
 	using ControlRL
 
 	TableOfContents()
@@ -47,22 +59,10 @@ Several example policies are provided. Feel free to experiment with one of them,
 combine two or more of them, or experiment with your own policies!
 """
 
-# ╔═╡ fac6522b-c189-4b7c-be35-11d038a854bc
-"""
-	π(actions, states, rewards)
-
-The policy π decides the action (deadline hit/miss) based on the history of
-past actions, states, and rewards. It returns a single true/false value.
-"""
-function π(actions::Vector{Bool}, states::Vector{Vector{Float64}}, rewards::Vector{Float64})
-	## Example 1: return true when the distance to reference is greater than 1
-	# return rewards[end] <= -1
-	
-	## Example 2: return true when the distance increase consecutively for 3 steps
-	# return length(rewards) > 2 && (rewards[end-2] > rewards[end-1] > rewards[end])
-
-	## Example 3: return true when the utilization up to now is less than 0.5
-	return length(actions) > 0 && (sum(actions) / length(actions) < 0.5)
+# ╔═╡ 5b942204-8f67-4768-b37f-959c6ff670a0
+mutable struct Agent
+	reward::Function
+	π::Function
 end
 
 # ╔═╡ 8015eee9-cfe9-4890-a3a5-e3f97517d1d2
@@ -94,7 +94,7 @@ Define the sampling period $T$ and time horizon $H$
 const T = 0.02
 
 # ╔═╡ 837c7cf2-66cb-4ebe-a417-df1e5da9cc73
-const H = 500
+const H = 100
 
 # ╔═╡ 2fee3edd-bba5-4738-a43c-691c9b4cf3de
 md"""
@@ -110,26 +110,17 @@ Convert a chosen model from continuous to discrete form using sampling period $T
 """
 
 # ╔═╡ a274cbd6-13c3-499f-8407-41211e25dae1
-sys = c2d(benchmarks[:CC], T)
+sys = c2d(benchmarks[:F1], T)
 
 # ╔═╡ 4730f9cd-493d-42ea-9006-013a746a149f
 md"""
 Initiate the simulation environment and Simulate the system for $H$ steps.
 """
 
-# ╔═╡ cbd51753-b04a-40c9-8f5b-9b88c74fc6f7
-actions, states, rewards, ideal_states = let 
-	env = Environment(sys)
-	sim!(env, π, H)
-end
-
 # ╔═╡ 09e3258a-a3fe-43a0-8f65-0d4a13b5c513
 md"""
 Calculate the total rewards over $H=$ $H steps
 """
-
-# ╔═╡ 45b657ae-6220-44b3-aa35-cae27bf730b0
-total_rewards = sum(rewards)
 
 # ╔═╡ eb39929a-46b6-4d53-a3e9-30af17500b54
 md"""
@@ -140,6 +131,29 @@ Plot the trajectory of system dynamics following the reference policy.
 md"""
 Plot the trajectory of system dynamics following the defined policy.
 """
+
+# ╔═╡ 04ee9331-a1cc-4c73-88e7-ea560dd40679
+@bind hit_chance Slider(0:0.01:1)
+
+# ╔═╡ fac6522b-c189-4b7c-be35-11d038a854bc
+"""
+	π(actions, states, rewards)
+
+The policy π decides the action (deadline hit/miss) based on the history of
+past actions, states, and rewards. It returns a single true/false value.
+"""
+function π(actions::Vector{Bool}, states::Vector{Vector{Float64}}, rewards::Vector{Float64})
+	return rand() <= hit_chance
+end
+
+# ╔═╡ cbd51753-b04a-40c9-8f5b-9b88c74fc6f7
+actions, states, rewards, ideal_states = let 
+	env = Environment(sys)
+	sim!(env, π, H)
+end
+
+# ╔═╡ 45b657ae-6220-44b3-aa35-cae27bf730b0
+total_rewards = sum(rewards)
 
 # ╔═╡ ad589207-0f42-446a-b3d6-167a54c02950
 md"""
@@ -180,6 +194,7 @@ plotH(rewards)
 # ╟─5ff9a070-12a3-45fd-a1b4-b619998e468a
 # ╠═2fd32b80-1d52-4a97-8dab-46f1278ebc58
 # ╟─05117c1b-a715-44f4-9f98-c7fbca48ce30
+# ╠═5b942204-8f67-4768-b37f-959c6ff670a0
 # ╠═fac6522b-c189-4b7c-be35-11d038a854bc
 # ╟─8015eee9-cfe9-4890-a3a5-e3f97517d1d2
 # ╟─c57331ac-ea8e-44b9-9213-9cad71788244
@@ -196,6 +211,7 @@ plotH(rewards)
 # ╟─eb39929a-46b6-4d53-a3e9-30af17500b54
 # ╠═19634c38-ec2c-45a0-862a-3f92beecb5a1
 # ╟─d9b853f3-4f79-487e-98ef-2f1b321b9d69
+# ╠═04ee9331-a1cc-4c73-88e7-ea560dd40679
 # ╠═66fbe369-33e7-409f-ae66-29c1984518b3
 # ╟─ad589207-0f42-446a-b3d6-167a54c02950
 # ╠═7c54f79a-6bb4-4190-ab13-bca71bb868a8
