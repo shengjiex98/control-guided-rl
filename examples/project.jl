@@ -21,7 +21,7 @@ begin
 	Pkg.instantiate()
 	
 	using Revise
-	using Plots
+	using Plots: plot, plotlyjs
 	plotlyjs()
 	using LinearAlgebra
 	using PlutoUI
@@ -36,6 +36,32 @@ end
 md"""
 ## Setting up Packages
 """
+
+# ╔═╡ 999550c8-9c1c-4621-8d36-1014bc05ac3e
+md"""
+## TODO
+
+- Choose a different control model with clear use cases for the barrier function
+- Learn policy instead hard-coding it
+- Add a barrier function, either 1) predefined, or 2) learned
+"""
+
+# ╔═╡ 1b3c85d2-2f61-4488-b84b-3b275b6a4e0c
+md"""
+## Defining the Barrier Function
+"""
+
+# ╔═╡ 05095eb9-1670-4846-af02-972a33de2a32
+function h(state::Real)
+	return log(state)
+end
+
+# ╔═╡ 2fd8025d-1f65-4fb0-9d80-1ec06e2a17ff
+let
+	x = [2,3,4]
+	y = [7,8,9]
+	plot(x, y, marker=true)
+end
 
 # ╔═╡ 5ff9a070-12a3-45fd-a1b4-b619998e468a
 md"""
@@ -64,6 +90,15 @@ mutable struct Agent
 	reward::Function
 	π::Function
 end
+
+# ╔═╡ f5e7d286-3bb0-4b0e-9656-77d9cbb346b0
+y = begin
+	x = 5
+	x + 2
+end
+
+# ╔═╡ 6eb13cab-526c-4762-97d3-41a2b20968a3
+print(x)
 
 # ╔═╡ 8015eee9-cfe9-4890-a3a5-e3f97517d1d2
 md"""
@@ -115,6 +150,8 @@ sys = c2d(benchmarks[:F1], T)
 # ╔═╡ 4730f9cd-493d-42ea-9006-013a746a149f
 md"""
 Initiate the simulation environment and Simulate the system for $H$ steps.
+
+The dimensionality of the state matrices is (state dimension $\times$ time steps)
 """
 
 # ╔═╡ 09e3258a-a3fe-43a0-8f65-0d4a13b5c513
@@ -133,7 +170,7 @@ Plot the trajectory of system dynamics following the defined policy.
 """
 
 # ╔═╡ 04ee9331-a1cc-4c73-88e7-ea560dd40679
-@bind hit_chance Slider(0:0.01:1)
+@bind hit_chance Slider(0:0.01:1, show_value=true)
 
 # ╔═╡ fac6522b-c189-4b7c-be35-11d038a854bc
 """
@@ -167,7 +204,7 @@ md"""
 
 # ╔═╡ 5402045e-83ef-4b90-9f14-1796fdadacc0
 """
-	plotH(x)
+	plotH(states)
 
 Plot the system states as recorded in states matrix.
 """
@@ -191,10 +228,16 @@ plotH(rewards)
 # ╔═╡ Cell order:
 # ╟─abb82687-12f0-4754-b3dd-49c03f3c9ad1
 # ╠═04f3e318-6489-11ef-1ccc-89d0ed2d1029
+# ╠═999550c8-9c1c-4621-8d36-1014bc05ac3e
+# ╠═1b3c85d2-2f61-4488-b84b-3b275b6a4e0c
+# ╠═05095eb9-1670-4846-af02-972a33de2a32
+# ╠═2fd8025d-1f65-4fb0-9d80-1ec06e2a17ff
 # ╟─5ff9a070-12a3-45fd-a1b4-b619998e468a
 # ╠═2fd32b80-1d52-4a97-8dab-46f1278ebc58
 # ╟─05117c1b-a715-44f4-9f98-c7fbca48ce30
-# ╠═5b942204-8f67-4768-b37f-959c6ff670a0
+# ╟─5b942204-8f67-4768-b37f-959c6ff670a0
+# ╠═f5e7d286-3bb0-4b0e-9656-77d9cbb346b0
+# ╠═6eb13cab-526c-4762-97d3-41a2b20968a3
 # ╠═fac6522b-c189-4b7c-be35-11d038a854bc
 # ╟─8015eee9-cfe9-4890-a3a5-e3f97517d1d2
 # ╟─c57331ac-ea8e-44b9-9213-9cad71788244
